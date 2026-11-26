@@ -4,237 +4,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ShopSphere</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f8; color: #222; }
-        header { background: #1f3a5f; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
-        main { max-width: 900px; margin: 20px auto; padding: 0 16px; }
-        .card { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
-        input { padding: 8px; margin: 4px 4px 4px 0; border: 1px solid #ccc; border-radius: 4px; }
-        input.qty { width: 60px; }
-        button { padding: 8px 14px; border: 0; border-radius: 4px; background: #2d6cdf; color: #fff; cursor: pointer; }
-        button.danger { background: #c0392b; margin-left: 4px; }
-        button:disabled { background: #aaa; cursor: default; }
-        #msg { min-height: 22px; font-weight: bold; margin-bottom: 8px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-        .hidden { display: none; }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<header>
-    <h2>ShopSphere</h2>
-    <div><span id="who"></span> <button id="logoutBtn" class="hidden" onclick="logout()">Logout</button></div>
-</header>
+<div class="topbar">Free delivery over $50 &middot; 7-day returns &middot; Cash on delivery</div>
+<header class="site"><div class="wrap bar">
+    <a class="logo" href="/"><i></i>ShopSphere</a>
+    <nav><a href="#products">Shop</a><a href="#categories">Categories</a></nav>
+    <div class="right"><a class="btn btn-dark" href="/cart.html">Cart (<span id="cartCount">0</span>)</a><a class="btn btn-ghost-dark" href="/account.html">Account</a></div>
+</div></header>
 
-<main>
-    <div id="msg"></div>
+<main class="wrap">
+    <section class="hero">
+        <div>
+            <span class="eyebrow">NEW SEASON COLLECTION</span>
+            <h1>Premium tech.<br>Priced fairly.</h1>
+            <p>Hand-picked accessories with live stock, transparent prices and a checkout that takes one step.</p>
+            <div class="actions"><a class="btn btn-accent" href="#products">Shop the collection</a><a class="btn btn-ghost" href="/account.html">Sign in</a></div>
+        </div>
+        <div class="art"><svg viewBox="0 0 200 140" fill="none" stroke="#fff" stroke-width="3" aria-hidden="true"><circle cx="100" cy="70" r="60" fill="#1F2D4D" stroke="none"/><path d="M50 90V70a50 50 0 0 1 100 0v20"/><rect x="38" y="84" width="24" height="40" rx="10" fill="#C2410C" stroke="none"/><rect x="138" y="84" width="24" height="40" rx="10" fill="#C2410C" stroke="none"/></svg></div>
+    </section>
 
-    <div id="authCard" class="card">
-        <h3>Register</h3>
-        <input id="rName" placeholder="Full name">
-        <input id="rEmail" placeholder="Email">
-        <input id="rPass" type="password" placeholder="Password (8+ characters)">
-        <button onclick="register()">Register</button>
+    <section class="block" id="categories">
+        <div class="head"><h2>Shop by category</h2></div>
+        <div class="cats">
+            <div class="cat" style="background:#EAF0FD"><b>Electronics</b><span>Keyboards, monitors and more</span></div>
+            <div class="cat" style="background:#FDEBDD"><b>Accessories</b><span>Mice, stands, cables</span></div>
+            <div class="cat" style="background:#E4F3EA"><b>Audio</b><span>Headphones and speakers</span></div>
+        </div>
+    </section>
 
-        <h3>Login</h3>
-        <input id="lEmail" placeholder="Email">
-        <input id="lPass" type="password" placeholder="Password">
-        <button onclick="login()">Login</button>
-    </div>
-
-    <div id="adminCard" class="card hidden">
-        <h3>Admin: add a product</h3>
-        <input id="pName" placeholder="Name">
-        <input id="pDesc" placeholder="Description">
-        <input id="pPrice" type="number" step="0.01" min="0.01" placeholder="Price">
-        <input id="pStock" type="number" min="0" placeholder="Stock">
-        <button onclick="addProduct()">Add product</button>
-    </div>
-
-    <h3>Products</h3>
-    <div id="products" class="grid"></div>
-    <p>
-        <button id="prev" onclick="changePage(-1)">Previous</button>
-        <span id="pageInfo"></span>
-        <button id="next" onclick="changePage(1)">Next</button>
-    </p>
-
-    <div id="ordersCard" class="hidden">
-        <h3>My orders</h3>
-        <div id="orders"></div>
-    </div>
+    <section class="block" id="products">
+        <div class="head"><h2>Trending now</h2></div>
+        <div class="grid" id="grid"></div>
+        <div class="pager">
+            <button class="btn btn-dark" id="prev">Previous</button>
+            <span id="pageInfo"></span>
+            <button class="btn btn-dark" id="next">Next</button>
+        </div>
+    </section>
 </main>
 
+<footer class="site"><div class="wrap fcols">
+    <div><b>ShopSphere</b><p>Everyday tech with honest prices and a simple checkout.</p></div>
+    <div><b style="font-size:16px">Account</b><p><a href="/account.html" style="color:#B8C2D4">Sign in or register</a></p></div>
+</div></footer>
+<script src="/js/cart.js"></script>
 <script>
-    let token = localStorage.getItem('token');
+    const tints = ['#E7EEFC', '#FDEBDD', '#E4F3EA', '#EFE6F8'];
     let page = 0;
-    const $ = id => document.getElementById(id);
 
-    function say(text, good) {
-      $('msg').textContent = text;
-      $('msg').style.color = good ? 'green' : 'crimson';
+    function makeCard(p) {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const thumb = document.createElement('div');
+      thumb.className = 'thumb';
+      const letter = () => { thumb.textContent = p.name.charAt(0).toUpperCase(); thumb.style.background = tints[p.id % 4]; };
+      if (p.imageUrl) {
+        const img = document.createElement('img');
+        img.src = p.imageUrl;
+        img.alt = p.name;
+        img.onerror = () => { img.remove(); letter(); };
+        thumb.append(img);
+      } else { letter(); }
+
+      const info = document.createElement('div');
+      info.className = 'info';
+      const name = document.createElement('b');
+      name.textContent = p.name;
+      const stock = document.createElement('small');
+      stock.textContent = p.stock > 0 ? p.stock + ' in stock' : 'Out of stock';
+      if (p.stock > 0 && p.stock <= 5) { stock.textContent = 'Only ' + p.stock + ' left'; stock.className = 'low'; }
+      const price = document.createElement('span');
+      price.className = 'price';
+      price.textContent = '$' + Number(p.price).toFixed(2);
+      info.append(name, stock, price);
+    const add = document.createElement('button');
+    add.className = 'btn btn-accent';
+    add.textContent = p.stock > 0 ? 'Add to cart' : 'Sold out';
+    add.disabled = p.stock < 1;
+    add.onclick = () => { Cart.add(p); toast('Added ' + p.name + ' to your cart'); };
+    info.append(add);
+      card.append(thumb, info);
+      return card;
     }
 
-    async function call(path, method, body) {
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = 'Bearer ' + token;
-      const res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
-      let data = null;
-      try { data = await res.json(); } catch (e) {}
-      if (!res.ok) {
-        if (res.status === 401 && token) {
-          logout();
-          throw new Error('Session expired. Please log in again.');
-        }
-        if (res.status === 400) throw new Error('Please check your input.');
-        if (res.status === 403) throw new Error('You are not allowed to do that.');
-        throw new Error((data && data.message) || ('Error ' + res.status));
-      }
-      return data;
+    async function load() {
+      const res = await fetch('/api/products?page=' + page + '&size=8');
+      const data = await res.json();
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      data.content.forEach(p => grid.append(makeCard(p)));
+      document.getElementById('pageInfo').textContent = 'Page ' + (data.number + 1) + ' of ' + Math.max(data.totalPages, 1);
+      document.getElementById('prev').disabled = data.first;
+      document.getElementById('next').disabled = data.last;
     }
 
-    async function register() {
-      try {
-        await call('/api/auth/register', 'POST',
-          { fullName: $('rName').value, email: $('rEmail').value, password: $('rPass').value });
-        say('Registered! Now log in.', true);
-      } catch (e) { say(e.message, false); }
-    }
-
-    async function login() {
-      try {
-        const data = await call('/api/auth/login', 'POST',
-          { email: $('lEmail').value, password: $('lPass').value });
-        token = data.token;
-        localStorage.setItem('token', token);
-        say('Logged in.', true);
-        updateUI();
-      } catch (e) { say(e.message, false); }
-    }
-
-    function logout() {
-      token = null;
-      localStorage.removeItem('token');
-      updateUI();
-    }
-
-    function readToken() {
-      try { return JSON.parse(atob(token.split('.')[1])); } catch (e) { return null; }
-    }
-
-    function isAdmin() {
-      const info = token ? readToken() : null;
-      return !!info && info.role === 'ADMIN';
-    }
-
-    function updateUI() {
-      const info = token ? readToken() : null;
-      if (token && !info) { token = null; localStorage.removeItem('token'); }
-      $('authCard').classList.toggle('hidden', !!info);
-      $('logoutBtn').classList.toggle('hidden', !info);
-      $('adminCard').classList.toggle('hidden', !isAdmin());
-      $('who').textContent = info ? info.sub + ' (' + info.role + ')' : '';
-      loadProducts();
-      loadOrders();
-    }
-
-    async function loadProducts() {
-      try {
-        const data = await call('/api/products?page=' + page + '&size=6', 'GET');
-        const box = $('products');
-        box.innerHTML = '';
-        data.content.forEach(p => {
-          const card = document.createElement('div');
-          card.className = 'card';
-          const title = document.createElement('b');
-          title.textContent = p.name;
-          const desc = document.createElement('p');
-          desc.textContent = p.description || '';
-          const info = document.createElement('p');
-          info.textContent = '$' + p.price + ' | in stock: ' + p.stock;
-          card.append(title, desc, info);
-
-          if (token) {
-            const qty = document.createElement('input');
-            qty.type = 'number';
-            qty.min = 1;
-            qty.value = 1;
-            qty.className = 'qty';
-            const btn = document.createElement('button');
-            btn.textContent = 'Order';
-            btn.disabled = p.stock < 1;
-            btn.onclick = () => placeOrder(p.id, parseInt(qty.value, 10));
-            card.append(qty, btn);
-          }
-          if (isAdmin()) {
-            const del = document.createElement('button');
-            del.textContent = 'Delete';
-            del.className = 'danger';
-            del.onclick = () => deleteProduct(p.id, p.name);
-            card.append(del);
-          }
-          box.appendChild(card);
-        });
-        $('pageInfo').textContent = 'Page ' + (data.number + 1) + ' of ' + Math.max(data.totalPages, 1);
-        $('prev').disabled = data.first;
-        $('next').disabled = data.last;
-      } catch (e) { say(e.message, false); }
-    }
-
-    function changePage(n) { page += n; loadProducts(); }
-
-    async function placeOrder(productId, quantity) {
-      if (!quantity || quantity < 1) { say('Enter a quantity of 1 or more.', false); return; }
-      try {
-        const order = await call('/api/orders', 'POST',
-          { items: [{ productId: productId, quantity: quantity }] });
-        say('Order #' + order.id + ' placed. Total: $' + order.total, true);
-        loadProducts();
-        loadOrders();
-      } catch (e) { say(e.message, false); }
-    }
-
-    async function addProduct() {
-      try {
-        const p = await call('/api/products', 'POST', {
-          name: $('pName').value,
-          description: $('pDesc').value,
-          price: parseFloat($('pPrice').value),
-          stock: parseInt($('pStock').value, 10)
-        });
-        say('Product "' + p.name + '" added.', true);
-        ['pName', 'pDesc', 'pPrice', 'pStock'].forEach(id => $(id).value = '');
-        loadProducts();
-      } catch (e) { say(e.message, false); }
-    }
-
-    async function deleteProduct(id, name) {
-      if (!confirm('Delete "' + name + '"?')) return;
-      try {
-        await call('/api/products/' + id, 'DELETE');
-        say('Product deleted.', true);
-        loadProducts();
-      } catch (e) { say(e.message, false); }
-    }
-
-    async function loadOrders() {
-      const box = $('orders');
-      box.innerHTML = '';
-      if (!token) { $('ordersCard').classList.add('hidden'); return; }
-      $('ordersCard').classList.remove('hidden');
-      try {
-        const list = await call('/api/orders', 'GET');
-        if (list.length === 0) { box.textContent = 'No orders yet.'; return; }
-        list.forEach(o => {
-          const div = document.createElement('div');
-          div.className = 'card';
-          const lines = o.items.map(i => i.quantity + ' x ' + i.productName).join(', ');
-          div.textContent = '#' + o.id + ' | ' + o.status + ' | $' + o.total + ' | ' + lines;
-          box.appendChild(div);
-        });
-      } catch (e) { say(e.message, false); }
-    }
-
-    updateUI();
+    document.getElementById('prev').onclick = () => { page--; load(); };
+    document.getElementById('next').onclick = () => { page++; load(); };
+    load();
 </script>
 </body>
 </html>

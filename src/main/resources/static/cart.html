@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Your cart - ShopSphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="topbar">Free delivery &middot; 7-day returns &middot; Cash on delivery</div>
+<header class="site"><div class="wrap bar">
+    <a class="logo" href="/"><i></i>ShopSphere</a>
+    <nav><a href="/#products">Shop</a></nav>
+    <div class="right"><a class="btn btn-dark" href="/cart.html">Cart (<span id="cartCount">0</span>)</a><a class="btn btn-ghost-dark" href="/account.html">Account</a></div>
+</div></header>
+
+<main class="wrap">
+    <h1 style="margin:32px 0 0;font-size:34px">Your cart</h1>
+    <div id="msg" role="status"></div>
+    <div class="cartwrap">
+        <div class="lines" id="lines"></div>
+        <aside class="summary" id="summary">
+            <b class="hd" style="font-size:18px">Order summary</b>
+            <div class="srow"><span>Subtotal</span><span id="sub">$0.00</span></div>
+            <div class="srow"><span>Delivery</span><span>Free</span></div>
+            <div class="srow" style="font-size:18px"><b>Total</b><b id="tot">$0.00</b></div>
+            <button class="btn btn-accent" id="checkout">Place order</button>
+            <small style="color:var(--grey)">Cash on delivery. Stock for all items is checked together.</small>
+        </aside>
+    </div>
+</main>
+
+<footer class="site"><div class="wrap"><b>ShopSphere</b><p>Everyday tech with honest prices and a simple checkout.</p></div></footer>
+
+<script src="/js/cart.js"></script>
+<script>
+    const money = n => '$' + Number(n).toFixed(2);
+    const $ = id => document.getElementById(id);
+
+    function say(text, good) {
+      $('msg').textContent = text;
+      $('msg').style.color = good ? 'green' : 'crimson';
+    }
+
+    function render() {
+      const items = Cart.read();
+      const box = $('lines');
+      box.innerHTML = '';
+
+      if (items.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'card empty';
+        empty.append('Your cart is empty. ');
+        const link = document.createElement('a');
+        link.href = '/#products';
+        link.textContent = 'Browse products';
+        empty.append(link);
+        box.append(empty);
+        $('summary').style.display = 'none';
+        Cart.badge();
+        return;
+      }
+      $('summary').style.display = '';
+
+      items.forEach(i => {
+        const row = document.createElement('div');
+        row.className = 'line';
+
+        const th = document.createElement('div');
+        th.className = 'thumb';
+        const letter = () => { th.textContent = i.name.charAt(0).toUpperCase(); };
+        if (i.imageUrl) {
+          const img = document.createElement('img');
+          img.src = i.imageUrl;
+          img.alt = i.name;
+          img.onerror = () => { img.remove(); letter(); };
+          th.append(img);
+        } else { letter(); }
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        const nm = document.createElement('b');
+        nm.textContent = i.name;
+        const pr = document.createElement('span');
+        pr.textContent = money(i.price) + ' each';
+        const rm = document.createElement('button');
+        rm.className = 'link';
+        rm.textContent = 'Remove';
+        rm.onclick = () => { Cart.remove(i.id); render(); };
+        meta.append(nm, pr, rm);
+
+        const q = document.createElement('div');
+        q.className = 'qty';
+        const minus = document.createElement('button');
+        minus.textContent = '-';
+        minus.setAttribute('aria-label', 'Decrease quantity of ' + i.name);
+        minus.onclick = () => { Cart.setQty(i.id, i.qty - 1); render(); };
+        const n = document.createElement('b');
+        n.textContent = i.qty;
+        const plus = document.createElement('button');
+        plus.textContent = '+';
+        plus.setAttribute('aria-label', 'Increase quantity of ' + i.name);
+        plus.disabled = i.qty >= i.stock;
+        plus.onclick = () => { Cart.setQty(i.id, i.qty + 1); render(); };
+        q.append(minus, n, plus);
+
+        const lineTotal = document.createElement('b');
+        lineTotal.textContent = money(i.price * i.qty);
+
+        row.append(th, meta, q, lineTotal);
+        box.append(row);
+      });
+
+      $('sub').textContent = money(Cart.total());
+      $('tot').textContent = money(Cart.total());
+      Cart.badge();
+    }
+
+    $('checkout').onclick = async () => {
+      const items = Cart.read();
+      if (items.length === 0) return;
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        say('Please sign in first, then come back to this page. ', false);
+        const a = document.createElement('a');
+        a.href = '/account.html';
+        a.textContent = 'Sign in';
+        $('msg').append(a);
+        return;
+      }
+
+      $('checkout').disabled = true;
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ items: items.map(i => ({ productId: i.id, quantity: i.qty })) })
+        });
+        let data = null;
+        try { data = await res.json(); } catch (e) {}
+        if (res.status === 401) {
+          localStorage.removeItem('token');
+          throw new Error('Your session expired. Please sign in again.');
+        }
+        if (!res.ok) throw new Error((data && data.message) || ('Error ' + res.status));
+        Cart.clear();
+        render();
+        say('Order #' + data.id + ' placed. Total: ' + money(data.total) + '. Thank you!', true);
+      } catch (e) {
+        say(e.message, false);
+      }
+      $('checkout').disabled = false;
+    };
+
+    render();
+</script>
+</body>
+</html>
