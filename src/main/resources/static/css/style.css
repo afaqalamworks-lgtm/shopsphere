@@ -57,3 +57,7 @@ footer.site b{color:#fff;font:700 20px Sora,sans-serif}
 .srow{display:flex;justify-content:space-between}
 #msg{min-height:24px;font-weight:600;margin-top:8px}
 .empty{padding:48px;text-align:center;color:var(--grey)}
+.tools{display:flex;gap:10px;flex-wrap:wrap}
+.tools input,.tools select{padding:12px 14px;border:1px solid var(--line);border-radius:12px;font:400 14px Inter,sans-serif;min-height:46px;background:#fff}
+.tools input{min-width:240px}
+.noresult{grid-column:1/-1;text-align:center;color:var(--grey);padding:40px}

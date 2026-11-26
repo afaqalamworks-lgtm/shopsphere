@@ -19,8 +19,9 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping
-    public Page<ProductResponse> list(@PageableDefault(size = 10, sort = "id") Pageable pageable) {
-        return productService.list(pageable);
+    public Page<ProductResponse> list(@RequestParam(required = false) String q,
+                                      @PageableDefault(size = 10, sort = "id") Pageable pageable) {
+        return productService.list(q, pageable);
     }
 
     @GetMapping("/{id}")

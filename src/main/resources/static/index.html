@@ -36,7 +36,17 @@
     </section>
 
     <section class="block" id="products">
-        <div class="head"><h2>Trending now</h2></div>
+        <div class="head"><h2>Trending now</h2>
+            <div class="tools">
+                <input id="search" type="search" placeholder="Search products" aria-label="Search products">
+                <select id="sort" aria-label="Sort products">
+                    <option value="id,asc">Newest first</option>
+                    <option value="price,asc">Price: low to high</option>
+                    <option value="price,desc">Price: high to low</option>
+                    <option value="name,asc">Name: A to Z</option>
+                </select>
+            </div>
+        </div>
         <div class="grid" id="grid"></div>
         <div class="pager">
             <button class="btn btn-dark" id="prev">Previous</button>
@@ -53,7 +63,7 @@
 <script src="/js/cart.js"></script>
 <script>
     const tints = ['#E7EEFC', '#FDEBDD', '#E4F3EA', '#EFE6F8'];
-    let page = 0;
+      let page = 0, q = '', sort = 'id,asc';
 
     function makeCard(p) {
       const card = document.createElement('div');
@@ -91,20 +101,33 @@
       return card;
     }
 
-    async function load() {
-      const res = await fetch('/api/products?page=' + page + '&size=8');
-      const data = await res.json();
-      const grid = document.getElementById('grid');
-      grid.innerHTML = '';
-      data.content.forEach(p => grid.append(makeCard(p)));
-      document.getElementById('pageInfo').textContent = 'Page ' + (data.number + 1) + ' of ' + Math.max(data.totalPages, 1);
-      document.getElementById('prev').disabled = data.first;
-      document.getElementById('next').disabled = data.last;
+     async function load() {
+    const url = '/api/products?page=' + page + '&size=8&sort=' + sort + '&q=' + encodeURIComponent(q);
+    const res = await fetch(url);
+    const data = await res.json();
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    if (data.content.length === 0) {
+      const none = document.createElement('p');
+      none.className = 'noresult';
+      none.textContent = 'No products match your search.';
+      grid.append(none);
     }
+    data.content.forEach(p => grid.append(makeCard(p)));
+    document.getElementById('pageInfo').textContent = 'Page ' + (data.number + 1) + ' of ' + Math.max(data.totalPages, 1);
+    document.getElementById('prev').disabled = data.first;
+    document.getElementById('next').disabled = data.last;
+  }
 
-    document.getElementById('prev').onclick = () => { page--; load(); };
-    document.getElementById('next').onclick = () => { page++; load(); };
-    load();
+  document.getElementById('prev').onclick = () => { page--; load(); };
+  document.getElementById('next').onclick = () => { page++; load(); };
+  document.getElementById('sort').onchange = e => { sort = e.target.value; page = 0; load(); };
+  let timer;
+  document.getElementById('search').oninput = e => {
+    clearTimeout(timer);
+    timer = setTimeout(() => { q = e.target.value; page = 0; load(); }, 300);
+  };
+  load();
 </script>
 </body>
 </html>

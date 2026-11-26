@@ -19,8 +19,11 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
-    public Page<ProductResponse> list(Pageable pageable) {
-        return productRepository.findAll(pageable).map(ProductResponse::from);
+    public Page<ProductResponse> list(String q, Pageable pageable) {
+        Page<Product> page = (q == null || q.isBlank())
+                ? productRepository.findAll(pageable)
+                : productRepository.findByNameContainingIgnoreCase(q.trim(), pageable);
+        return page.map(ProductResponse::from);
     }
 
     public ProductResponse get(Long id) {
