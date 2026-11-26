@@ -1,34 +1,23 @@
 # ShopSphere
 
-A small e-commerce REST API with a simple web front end, built with Java 21, Spring Boot 4, Spring Security (JWT) and MySQL.
+An online electronics store: a Spring Boot REST API with JWT security and MySQL, plus a multi-page web front end served by the same application.
 
 ## Features
 
-- Register and log in with a hashed password (BCrypt) and a JWT token
+- Register and log in with a BCrypt-hashed password and a JWT token
 - Role-based access: `CUSTOMER` and `ADMIN`
-- Products: public list with pagination; admins can add, edit and delete
-- Orders: customers place orders, stock is checked and reduced in one transaction (all or nothing), and order history is kept per customer
-- The price is saved on each order line, so later price changes do not alter old orders
-- Input validation and clear JSON error messages
+- Products with pictures, search, sorting and pagination; admins can add, edit and delete
+- Shopping cart with quantity controls, and one checkout that places all items in a single order
+- Orders are processed in one transaction: stock is checked and reduced all or nothing, and the price is saved on each order line so later price changes do not alter old orders
+- Order history per customer
+- Input validation and clear JSON error messages through a global exception handler
 - Swagger UI for API documentation
-- A single-page front end (HTML, CSS and JavaScript) served by the same application
+- Unit tests for the order logic (JUnit 5 and Mockito)
+- Database password and JWT secret kept out of source control
 
 ## Tech stack
 
-Java 21, Spring Boot 4, Spring Security, Spring Data JPA (Hibernate), MySQL, JWT (jjwt), Lombok, springdoc-openapi (Swagger), Maven
-
-## Project structure
-
-```
-controller   REST endpoints
-service      business logic
-repository   database access
-entity       database tables
-dto          request and response objects
-security     JWT and security configuration
-exception    global error handler
-config       Swagger configuration
-```
+Java 21, Spring Boot 4, Spring Security, Spring Data JPA (Hibernate), MySQL, JWT (jjwt), Lombok, springdoc-openapi (Swagger), Maven, HTML, CSS and JavaScript
 
 ## Run it locally
 
@@ -55,7 +44,7 @@ jwt.secret=a-random-secret-of-at-least-32-characters
 ```
 
 5. Open:
-    - Web page: http://localhost:8080
+    - Store: http://localhost:8080
     - Swagger UI: http://localhost:8080/swagger-ui.html
 
 ## Main endpoints
@@ -64,7 +53,7 @@ jwt.secret=a-random-secret-of-at-least-32-characters
 |---|---|---|
 | POST | /api/auth/register | public |
 | POST | /api/auth/login | public |
-| GET | /api/products | public |
+| GET | /api/products (supports `q`, `sort`, `page`, `size`) | public |
 | GET | /api/products/{id} | public |
 | POST, PUT, DELETE | /api/products | admin only |
 | POST | /api/orders | logged-in user |
@@ -77,3 +66,7 @@ New users are always `CUSTOMER`. To create an admin, run this in MySQL:
 ```sql
 UPDATE users SET role = 'ADMIN' WHERE email = 'you@example.com';
 ```
+
+## Possible improvements
+
+Product categories, an admin dashboard, payments, integration tests, and deployment.
